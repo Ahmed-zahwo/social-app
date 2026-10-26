@@ -13,7 +13,12 @@ import {
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 
-export default function PostCard({ post, currentUser, onPostUpdate }) {
+export default function PostCard({
+  post,
+  currentUser,
+  onPostUpdate,
+  onPostDelete,
+}) {
   const [comments, setComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -302,6 +307,53 @@ export default function PostCard({ post, currentUser, onPostUpdate }) {
     }
   }
 
+  async function handleDeletePost() {
+    if (busyAction) return;
+
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You will not be able to recover this post!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#7c3aed",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    setBusyAction(true);
+    setError("");
+
+    try {
+      await apiRequest(`/posts/${postId}`, {
+        method: "DELETE",
+      });
+
+      onPostDelete?.(postId);
+
+      await Swal.fire({
+        title: "Deleted!",
+        text: "Your post has been deleted.",
+        icon: "success",
+        confirmButtonColor: "#7c3aed",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      await Swal.fire({
+        title: "Error!",
+        text: err.message || "Could not delete post.",
+        icon: "error",
+        confirmButtonColor: "#7c3aed",
+      });
+    } finally {
+      setBusyAction(false);
+    }
+  }
+
   const dateLabel = post.createdAt
     ? new Date(post.createdAt).toLocaleDateString("en-US", {
         month: "short",
@@ -377,7 +429,20 @@ export default function PostCard({ post, currentUser, onPostUpdate }) {
                   Edit post
                 </button>
               )}
-
+              {isPostOwner && (
+                <button
+                  type="button"
+                  disabled={busyAction}
+                  onClick={() => {
+                    setShowPostMenu(false);
+                    handleDeletePost();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  Delete post
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {

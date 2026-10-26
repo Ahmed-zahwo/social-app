@@ -242,6 +242,13 @@ export default function Home() {
                   post={post}
                   currentUser={user}
                   onPostUpdate={handlePostUpdate}
+                  onPostDelete={(deletedPostId) => {
+                    setPosts((previousPosts) =>
+                      previousPosts.filter(
+                        (item) => (item.id || item._id) !== deletedPostId,
+                      ),
+                    );
+                  }}
                 />
               ))}
             </div>
